@@ -89,10 +89,13 @@ public class ImageService {
 	
 	public ResponseEntity<Object> getImageById(String id){
 		Image image;
+		ImageJson imgJson;
 		
 		try {
 			
-		image=imageDao.getImageFromId(id);		
+		image=imageDao.getImageFromId(id);
+		 imgJson =new ImageJson(image.getId(),imageDao.getImagefromS3(id, image.getUrl()).toString());
+
 		}
 		catch(NoResultException e){
 			ApiResponse resp = new ApiResponse(HttpStatus.NOT_FOUND, "The requested resource could not be found", "Resource not available");
@@ -101,7 +104,7 @@ public class ImageService {
 		
 		if(image != null) {
 	
-			return new ResponseEntity<Object>(new ImageJson(image), HttpStatus.OK);
+			return new ResponseEntity<Object>(imgJson, HttpStatus.OK);
 		}
 		
 		else {

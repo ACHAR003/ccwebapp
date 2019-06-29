@@ -2,12 +2,14 @@ TEMPLATE_NAME=$1
 AMI_ID=$2
 STACK_NAME=$3
 NETWORK_STACK_NAME=$4
+BUCKET_NAME=$5
+KEY_NAME=$6
 
 
-if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4"]
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ] || [ -z "$4" ] || [ -z "$5" ] || [ -z "$6" ]
   then
     echo "Error! Argument Required"
-    echo "Usage - sh script.sh <TemplateFile> <AMI_ID> <Application_Stack_Name> <Network_Stack_Name>" 
+    echo "Usage - sh script.sh <TemplateFile> <AMI_ID> <Application_Stack_Name> <Network_Stack_Name> <S3_Bucket_Name> <Key_Name>" 
     exit 1
 fi
 
@@ -24,6 +26,9 @@ aws cloudformation create-stack --stack-name ${STACK_NAME} \
 --parameters ParameterKey=StackName,ParameterValue=${STACK_NAME} \
 ParameterKey=NetworkStackName,ParameterValue=${NETWORK_STACK_NAME} \
 ParameterKey=AmiId,ParameterValue=${AMI_ID} \
+ParameterKey=BucketName,ParameterValue=${BUCKET_NAME} \
+ParameterKey=KeyName,ParameterValue=${KEY_NAME} \
+--capabilities CAPABILITY_NAMED_IAM \
 | jq -r .StackId \
 )
 

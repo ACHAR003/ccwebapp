@@ -3,6 +3,7 @@ package com.neu.library.dao;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,9 +19,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.amazonaws.HttpMethod;
 import com.amazonaws.auth.AWSCredentials;
 import com.amazonaws.auth.profile.ProfileCredentialsProvider;
+import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3Client;
+import com.amazonaws.services.s3.AmazonS3ClientBuilder;
+import com.amazonaws.services.s3.model.GeneratePresignedUrlRequest;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.neu.library.model.Book;
 import com.neu.library.model.Image;
@@ -70,6 +75,7 @@ public class ImageDAO {
 		}
 		return image;
 	}
+	
 	private Image saveImagetToS3Bucket(MultipartFile file, Book book) {
 		Image image = null;
 		String filename;
@@ -77,19 +83,25 @@ public class ImageDAO {
 			String fileNameWithOutExt = FilenameUtils.removeExtension(file.getOriginalFilename());
 			filename = fileNameWithOutExt + "_" + new Date().getTime() + "."
 					+ FilenameUtils.getExtension(file.getOriginalFilename());
-			AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-			AmazonS3Client s3Client = new AmazonS3Client(credentials);
+			//AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
+			//AmazonS3Client s3Client = new AmazonS3Client(credentials);
+			AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+			
 			File tempFile = this.convert(file);
+			
+			
 			s3Client.putObject(new PutObjectRequest(this.bucketName, filename, tempFile));
-			String path = s3Client.getResourceUrl(this.bucketName, filename);
+			String path = s3Client.getUrl(this.bucketName, filename).toString();
 			tempFile.delete();
 			image = new Image(path,book);
 			this.entityManager.persist(image);
 		} catch (Exception e) {
-			e.printStackTrace();
+		e.printStackTrace();
 		}
 		return image;
-}
+	}
+	
+	
 	
 	private int checkIfImage(String bookId) {
 		
@@ -121,7 +133,29 @@ public class ImageDAO {
 	@Transactional
 	public Image getImageFromId(String id) {
 		Image imageToBeDeleted = this.entityManager.find(Image.class, id);
+		
 		return imageToBeDeleted;
+	}
+	
+	public URL getImagefromS3(String id,String url ) {
+		
+		
+		AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
+	     java.util.Date expiration = new java.util.Date();
+         long expTimeMillis = expiration.getTime();
+         expTimeMillis += 1000 * 2 * 60;
+         expiration.setTime(expTimeMillis);	
+			 System.out.println("Generating pre-signed URL.");
+	            GeneratePresignedUrlRequest generatePresignedUrlRequest = 
+	                    new GeneratePresignedUrlRequest(this.bucketName, url.substring(url.lastIndexOf("/")+1))
+	                    .withMethod(HttpMethod.GET)
+	                    .withExpiration(expiration);
+	            URL myUrl = s3Client.generatePresignedUrl(generatePresignedUrlRequest);
+	    
+	            System.out.println("Pre-Signed URL: " +url.substring(url.lastIndexOf("/")+1,url.lastIndexOf(".")));
+		
+	
+	return myUrl;
 	}
 	@Transactional
 	public void deleteImage( String id) {
@@ -166,8 +200,7 @@ public class ImageDAO {
 		String entirePath = imageToBeDeleted.getUrl();
 		String filename = entirePath.substring(entirePath.lastIndexOf("/")+1);
 		try {
-			AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-			AmazonS3Client s3Client = new AmazonS3Client(credentials);
+			AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
 			s3Client.deleteObject(this.bucketName,filename);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -257,8 +290,7 @@ public class ImageDAO {
 		String filename = entirePath.substring(entirePath.lastIndexOf("/")+1);
 		System.out.println(filename);
 		try {
-			AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-			AmazonS3Client s3Client = new AmazonS3Client(credentials);
+			AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
 			s3Client.deleteObject(this.bucketName,filename);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -269,11 +301,10 @@ public class ImageDAO {
 			String fileNameWithOutExt = FilenameUtils.removeExtension(file.getOriginalFilename());
 			filename = fileNameWithOutExt + "_" + new Date().getTime() + "."
 					+ FilenameUtils.getExtension(file.getOriginalFilename());
-			AWSCredentials credentials = new ProfileCredentialsProvider().getCredentials();
-			AmazonS3Client s3Client = new AmazonS3Client(credentials);
+			AmazonS3 s3Client = AmazonS3ClientBuilder.defaultClient();
 			File tempFile = this.convert(file);
 			s3Client.putObject(new PutObjectRequest(this.bucketName, filename, tempFile));
-			String path = s3Client.getResourceUrl(this.bucketName, filename);
+			String path = s3Client.getUrl(this.bucketName, filename).toString();
 			tempFile.delete();
 			image = new Image(path, book);
 		} catch (Exception e) {

@@ -13,7 +13,15 @@
         "AmiId":{  
             "Type":"String",
             "Description":"Enter AMI ID"
-        }
+        },
+	"BucketName": {
+            "Type": "String",
+            "Description" : "Please enter string for code deploy bucket name"
+         },
+ 	"KeyName": {
+            "Type": "String",
+            "Description" : "Please enter string for Key Name"
+         }
     },
     "Resources":{  
         "WebServerSecurityGroup":{  
@@ -78,18 +86,78 @@
             }
         
     },
+    "EC2UploadToS3Policy": {
+           "Type" : "AWS::IAM::ManagedPolicy",
+           "Properties" : {
+               "ManagedPolicyName" : "EC2-Upload-To-S3",
+               "PolicyDocument" : {
+                   "Version" : "2012-10-17",
+                   "Statement": [ {
+                       "Effect"   : "Allow",
+                       "Action"   : [
+                            "s3:PutObject",
+			    "s3:Get*",
+                            "s3:DeleteObject"
+		       ],
+	               "Resource" : { "Fn::Sub" : "arn:aws:s3:::csye6225-su19-${BucketName}.me.csye6225.com/*"}
+		   } ]
+	       }
+           }
+       },
+     "EC2S3AccessRole": {
+	   "Type": "AWS::IAM::Role",
+           "Properties": {
+               "AssumeRolePolicyDocument": {
+                   "Version" : "2012-10-17",
+                   "Statement": [ {
+                       "Effect": "Allow",
+                       "Principal": {
+                           "Service": [ "ec2.amazonaws.com" ]
+                       },
+                       "Action": [ "sts:AssumeRole" ]
+                   } ]
+	       },
+	       "ManagedPolicyArns": [ {"Ref" : "EC2UploadToS3Policy"} ],
+    	       "RoleName": "EC2S3AccessRole"
+           }
+       },
+       "EC2InstanceProfile":{
+           "Type": "AWS::IAM::InstanceProfile",
+           "Properties": {
+               "Roles": [ {"Ref": "EC2S3AccessRole"} ],
+               "InstanceProfileName": "EC2InstanceProfile"
+           }
+       },     
     "myEC2Instance":{  
         "Type":"AWS::EC2::Instance",
         "Properties":{ 
             "ImageId":{"Ref":"AmiId"},
             "InstanceType":"t2.micro",
+		"KeyName" : {"Ref":"KeyName"},
 	    "NetworkInterfaces" : [{
                     "GroupSet"                 : [{"Ref":"WebServerSecurityGroup"}], 
                     "AssociatePublicIpAddress" : "true",
 		    "DeviceIndex"	       : "0",
                     "DeleteOnTermination"      : "true",
                     "SubnetId"                 : {"Fn::ImportValue":{"Fn::Sub":"${NetworkStackName}-subnet1id"}} 
-               }]
+               }],
+	       "IamInstanceProfile" : { "Ref" : "EC2InstanceProfile" },
+    		"UserData":{
+	           "Fn::Base64":{
+                       "Fn::Join":[
+                           "",
+			   [
+			       "#!/bin/bash \n",
+			       "echo export DB_HOST=",{"Fn::GetAtt": ["myRDS","Endpoint.Address"]}, " >> /etc/profile \n",
+			       "echo export DB_PORT=",{"Fn::GetAtt": ["myRDS","Endpoint.Port"]}," >> /etc/profile \n",
+			       "echo export DB_USERNAME='csye6225master' >> /etc/profile \n",
+			       "echo export DB_PASSWORD='csye6225password' >> /etc/profile \n",
+		    	       "echo export S3_BUCKET=",{"Fn::Sub": "csye6225-su19-${BucketName}.me.csye6225.com" }," >> /etc/profile \n",
+			       "source /etc/profile"
+			   ]
+		        ]
+           }
+       }
 	}
     },
 "myDBSubnetGroup":{  
@@ -128,7 +196,7 @@
             "DBSubnetGroupName":{  
                 "Ref":"myDBSubnetGroup"
             },
-	"VPCSecurityGroups":[{"Ref":"WebServerSecurityGroup"}],
+	"VPCSecurityGroups":[{"Ref":"DBServerSecurityGroup"}],
             "PubliclyAccessible":"true",
             "DBName":"csye6225"
         }
