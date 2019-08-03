@@ -14,14 +14,14 @@
             "Type":"String",
             "Description":"Enter AMI ID"
         },
- 	"KeyName": {
-            "Type": "String",
-            "Description" : "Please enter string for Key Name"
-         },
-	 "BucketName":{
-		"Description":"Enter S# Bucket Name",
-		"Type": "String"
-	 }
+        "KeyName":{  
+            "Type":"String",
+            "Description":"Please enter string for Key Name"
+        },
+        "BucketName":{  
+            "Description":"Enter S# Bucket Name",
+            "Type":"String"
+        }
     },
     "Resources":{  
         "WebServerSecurityGroup":{  
@@ -78,107 +78,186 @@
                     }
                 ]
             }
-        
-    },   
-    "myEC2Instance":{  
-        "Type":"AWS::EC2::Instance",
-        "Properties":{ 
-            "ImageId":{"Ref":"AmiId"},
-            "InstanceType":"t2.micro",
-		"KeyName" : {"Ref":"KeyName"},
-		 "Tags"		: [ {
-		       		      "Key" : "Environment",
-		       		      "Value" : "Cloud"
-	       			  } ],
-	    "NetworkInterfaces" : [{
-                    "GroupSet"                 : [{"Ref":"WebServerSecurityGroup"}], 
-                    "AssociatePublicIpAddress" : "true",
-		    "DeviceIndex"	       : "0",
-                    "DeleteOnTermination"      : "true",
-                    "SubnetId"                 : {"Fn::ImportValue":{"Fn::Sub":"${NetworkStackName}-subnet1id"}} 
-               }],
-	       "IamInstanceProfile" : { "Fn::ImportValue" : "EC2InstanceProfile" },
-    		"UserData":{
-	           "Fn::Base64":{
-                       "Fn::Join":[
-                           "",
-			   [
-			       "#!/bin/bash \n",
-			       "echo export DB_HOST=",{"Fn::GetAtt": ["myRDS","Endpoint.Address"]}, " >> /etc/profile \n",
-			       "echo export DB_PORT=",{"Fn::GetAtt": ["myRDS","Endpoint.Port"]}," >> /etc/profile \n",
-			       "echo export DB_USERNAME='csye6225master' >> /etc/profile \n",
-			       "echo export DB_PASSWORD='csye6225password' >> /etc/profile \n",
-		    	       "echo export S3_BUCKET=",{"Fn::Sub": "csye6225-su19-${BucketName}.me.csye6225.com" }," >> /etc/profile \n",
-			       "source /etc/profile \n",
-			       "sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080"
-			   ]
-		        ]
-           }
-       }
-	}
-    },
-"myDBSubnetGroup":{  
-        "Type":"AWS::RDS::DBSubnetGroup",
-        "Properties":{  
-            "DBSubnetGroupDescription":"This is subnet description",
-            "SubnetIds":[  
-                {  
-                    "Fn::ImportValue":{  
-                        "Fn::Sub":"${NetworkStackName}-subnet1id"
-                    }
+        },
+        "myEC2Instance":{  
+            "Type":"AWS::EC2::Instance",
+            "Properties":{  
+                "ImageId":{  
+                    "Ref":"AmiId"
                 },
-                {  
-                    "Fn::ImportValue":{  
-                        "Fn::Sub":"${NetworkStackName}-subnet2id"
-                    }
+                "InstanceType":"t2.micro",
+                "KeyName":{  
+                    "Ref":"KeyName"
                 },
-               {  
-                    "Fn::ImportValue":{  
-                        "Fn::Sub":"${NetworkStackName}-subnet3id"
+                "Tags":[  
+                    {  
+                        "Key":"Environment",
+                        "Value":"Cloud"
+                    }
+                ],
+                "NetworkInterfaces":[  
+                    {  
+                        "GroupSet":[  
+                            {  
+                                "Ref":"WebServerSecurityGroup"
+                            }
+                        ],
+                        "AssociatePublicIpAddress":"true",
+                        "DeviceIndex":"0",
+                        "DeleteOnTermination":"true",
+                        "SubnetId":{  
+                            "Fn::ImportValue":{  
+                                "Fn::Sub":"${NetworkStackName}-subnet1id"
+                            }
+                        }
+                    }
+                ],
+                "IamInstanceProfile":{  
+                    "Fn::ImportValue":"EC2InstanceProfile"
+                },
+                "UserData":{  
+                    "Fn::Base64":{  
+                        "Fn::Join":[  
+                            "",
+                            [  
+                                "#!/bin/bash \n",
+                                "echo export DB_HOST=",{"Fn::GetAtt":["myRDS","Endpoint.Address"]}," >> /etc/profile \n",
+                                "echo export DB_PORT=",{"Fn::GetAtt":["myRDS","Endpoint.Port"]}," >> /etc/profile \n",
+                                "echo export DB_USERNAME='csye6225master' >> /etc/profile \n",
+                                "echo export DB_PASSWORD='csye6225password' >> /etc/profile \n",
+                                "echo export S3_BUCKET=",{"Fn::Sub":"csye6225-su19-${BucketName}.me.csye6225.com"}," >> /etc/profile \n",
+				"echo export SNS_TOPIC=",{"Ref": "mySNSTopic" }," >> /etc/profile \n",
+                                "source /etc/profile \n",
+                                "sudo iptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080"
+                            ]
+                        ]
                     }
                 }
-            ]
-        }
-    },
-    "myRDS":{  
-        "Type":"AWS::RDS::DBInstance",
-        "Properties":{  
-            "AllocatedStorage":"20",
-            "DBInstanceClass":"db.m4.large",
-            "MultiAZ":"false",
-            "DBInstanceIdentifier":"csye6225-su19",
-            "MasterUsername":"csye6225master",
-            "Engine":"MariaDB",
-            "MasterUserPassword":"csye6225password",
-            "DBSubnetGroupName":{  
-                "Ref":"myDBSubnetGroup"
-            },
-	"VPCSecurityGroups":[{"Ref":"DBServerSecurityGroup"}],
-            "PubliclyAccessible":"true",
-            "DBName":"csye6225"
-        }
-    },
-    "myDynamoDBTable":{  
-        "Type":"AWS::DynamoDB::Table",
-        "Properties":{  
-            "TableName":"csye6225",
-            "AttributeDefinitions":[  
-                {  
-                    "AttributeName":"id",
-                    "AttributeType":"S"
-                }
-            ],
-            "KeySchema":[  
-                {  
-                    "AttributeName":"id",
-                    "KeyType":"HASH"
-                }
-            ],
-            "ProvisionedThroughput":{  
-                "ReadCapacityUnits":"5",
-                "WriteCapacityUnits":"5"
             }
-        }
+        },
+        "myDBSubnetGroup":{  
+            "Type":"AWS::RDS::DBSubnetGroup",
+            "Properties":{  
+                "DBSubnetGroupDescription":"This is subnet description",
+                "SubnetIds":[  
+                    {  
+                        "Fn::ImportValue":{  
+                            "Fn::Sub":"${NetworkStackName}-subnet1id"
+                        }
+                    },
+                    {  
+                        "Fn::ImportValue":{  
+                            "Fn::Sub":"${NetworkStackName}-subnet2id"
+                        }
+                    },
+                    {  
+                        "Fn::ImportValue":{  
+                            "Fn::Sub":"${NetworkStackName}-subnet3id"
+                        }
+                    }
+                ]
+            }
+        },
+        "myRDS":{  
+            "Type":"AWS::RDS::DBInstance",
+            "Properties":{  
+                "AllocatedStorage":"20",
+                "DBInstanceClass":"db.m4.large",
+                "MultiAZ":"false",
+                "DBInstanceIdentifier":"csye6225-su19",
+                "MasterUsername":"csye6225master",
+                "Engine":"MariaDB",
+                "MasterUserPassword":"csye6225password",
+                "DBSubnetGroupName":{  
+                    "Ref":"myDBSubnetGroup"
+                },
+                "VPCSecurityGroups":[  
+                    {  
+                        "Ref":"DBServerSecurityGroup"
+                    }
+                ],
+                "PubliclyAccessible":"true",
+                "DBName":"csye6225"
+            }
+        },
+        "myDynamoDBTable":{  
+            "Type":"AWS::DynamoDB::Table",
+            "Properties":{  
+                "TableName":"csye6225",
+		"TimeToLiveSpecification":{
+			"AttributeName" : "expiration",
+		        "Enabled" : "true"	
+		},
+                "AttributeDefinitions":[  
+                    {  
+                        "AttributeName":"id",
+                        "AttributeType":"S"
+                    }
+                ],
+                "KeySchema":[  
+                    {  
+                        "AttributeName":"id",
+                        "KeyType":"HASH"
+                    }
+                ],
+                "ProvisionedThroughput":{  
+                    "ReadCapacityUnits":"5",
+                    "WriteCapacityUnits":"5"
+                }
+            }
+        },
+        "mySNSTopic":{  
+            "Type":"AWS::SNS::Topic",
+            "Properties":{  
+                "DisplayName":"password_reset",
+                "Subscription":[  
+                    {  
+                        "Endpoint":{  
+                            "Fn::GetAtt":[  
+                                "myLambdaFunction",
+                                "Arn"
+                            ]
+                        },
+                        "Protocol":"lambda"
+                    }
+                ],
+                "TopicName":"password_reset"
+            }
+        },
+        "myLambdaFunction":{  
+            "Type":"AWS::Lambda::Function",
+            "Properties":{  
+                "Code":{  
+                    "S3Bucket":{"Fn::Sub":"code-deploy.csye6225-su19-${BucketName}.me"},
+                    "S3Key":"LambdaPackage.zip"
+                },
+                "Description":"Lambda Function to reset password",
+                "FunctionName":"password_reset",
+                "Handler":"lambda.DynamoLambda::handleRequest",
+                "MemorySize":512,
+                "Role":{  
+                    "Fn::ImportValue":"LambdaExecutionRole"
+                },
+		"Environment": {
+                   "Variables": {
+                   	"AWS_DOMAIN_NAME": {  "Ref" : "BucketName"  }
+		   }
+	        },
+                "Runtime":"java8",
+                "Timeout":300,
+                "TracingConfig":{  
+                    "Mode":"Active"
+                }
+            }
+        },
+
+	"LambdaPermission":{
+		"Type" : "AWS::Lambda::Permission",
+  		"Properties" : {
+      			"Action" : "lambda:InvokeFunction",
+      			"FunctionName" : {"Ref":"myLambdaFunction"},
+      			"Principal" : "sns.amazonaws.com"
+    		}
+	}
     }
-}
 }
