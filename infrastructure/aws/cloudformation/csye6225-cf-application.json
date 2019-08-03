@@ -185,7 +185,7 @@
             "Properties":{  
                 "TableName":"csye6225",
 		"TimeToLiveSpecification":{
-			"AttributeName" : "ttl",
+			"AttributeName" : "expiration",
 		        "Enabled" : "true"	
 		},
                 "AttributeDefinitions":[  
@@ -234,7 +234,7 @@
                 "Description":"Lambda Function to reset password",
                 "FunctionName":"password_reset",
                 "Handler":"lambda.DynamoLambda::handleRequest",
-                "MemorySize":128,
+                "MemorySize":512,
                 "Role":{  
                     "Fn::ImportValue":"LambdaExecutionRole"
                 },

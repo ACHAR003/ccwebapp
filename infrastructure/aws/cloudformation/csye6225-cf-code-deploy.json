@@ -407,11 +407,17 @@
                            "Action": [
                                "lambda:AddPermission",
                                "lambda:PutFunctionConcurrency",
-			       "lambda:UpdateFunctionCode",
-			       "s3:*"
+			       "lambda:UpdateFunctionCode"
                            ],
                            "Resource": {"Fn::Sub" : "arn:aws:lambda:${AWSRegion}:${AWSAccountID}:function:*"}
-                       }]       
+                       },
+		       {
+            		   "Sid": "VisualEditor1",
+        		   "Effect": "Allow",
+       		           "Action": "s3:*",
+   		           "Resource": "*"
+        	       }
+   			        ]       
 	       },
 	       "Users": ["circleci"]
 	   }    
