@@ -294,46 +294,7 @@
                 "RoleName":"CodeDeployServiceRole"
             }
         },
-        "CodeDeployApplication":{  
-            "Type":"AWS::CodeDeploy::Application",
-            "Properties":{  
-                "ApplicationName":"csye6225-webapp",
-                "ComputePlatform":"Server"
-            }
-        },
-        "CodeDeployDeploymentGroup":{  
-            "Type":"AWS::CodeDeploy::DeploymentGroup",
-            "Properties":{  
-                "ApplicationName":{  
-                    "Ref":"CodeDeployApplication"
-                },
-                "DeploymentGroupName":"csye6225-webapp-deployment",
-                "ServiceRoleArn":{  
-                    "Fn::GetAtt":[  
-                        "CodeDeployServiceRole",
-                        "Arn"
-                    ]
-                },
-                "DeploymentStyle":{  
-                    "DeploymentType":"IN_PLACE",
-                    "DeploymentOption":"WITHOUT_TRAFFIC_CONTROL"
-                },
-                "Ec2TagFilters":[  
-                    {  
-                        "Key":"Environment",
-                        "Value":"Cloud",
-                        "Type":"KEY_AND_VALUE"
-                    }
-                ],
-                "DeploymentConfigName":"CodeDeployDefault.AllAtOnce",
-                "AutoRollbackConfiguration":{  
-                    "Enabled":"true",
-                    "Events":[  
-                        "DEPLOYMENT_FAILURE"
-                    ]
-                }
-            }
-        },
+        
         "LambdaPolicy":{  
             "Type":"AWS::IAM::ManagedPolicy",
             "Properties":{  
@@ -441,6 +402,11 @@
 		"Export":{
 			"Name":"LambdaExecutionRole"
 		}
+	},
+	"CodeDeployServiceRole":{
+		"Description": "Code Deploy Service Role",
+		"Value":{ "Fn::GetAtt" : ["CodeDeployServiceRole","Arn"]},
+		"Export":{"Name":"CodeDeployServiceRole"}
 	}
     }
 }
