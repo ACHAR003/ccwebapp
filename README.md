@@ -35,7 +35,7 @@
 3. Run Eclipse project imported in above steps as **SpringBoot Application**
 
 ## Running Tests
-1. Run the LibrarySystem project imported in Eclipse as **JUnit Test**
+1. Run the LibrarySystem project imported in Eclipse as **JUnit Test*
 
 ## CI/CD
 k

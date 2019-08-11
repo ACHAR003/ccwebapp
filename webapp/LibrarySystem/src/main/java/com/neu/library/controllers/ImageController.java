@@ -34,7 +34,7 @@ public class ImageController {
 	 Logger logger = Logger.getLogger("LibrarySystemLog"); 
 	FileHandler fh;  
 
-	@RequestMapping(value = "/book/{bookId}/imagepp", method = RequestMethod.POST)
+	@RequestMapping(value = "/book/{bookId}/image", method = RequestMethod.POST)
 	public ResponseEntity<Object> imageToBook(@PathVariable @NotNull String bookId,
 			@RequestParam("file") MultipartFile file) throws SecurityException, IOException {
 		  fh = new FileHandler("/opt/tomcat/logs/csye6225.log");  

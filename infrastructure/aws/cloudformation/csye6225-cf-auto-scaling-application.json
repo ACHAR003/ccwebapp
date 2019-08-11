@@ -308,13 +308,9 @@
                         }
                     }
                 ],
-                "LaunchConfigurationName":{  
-                    "Ref":"LaunchConfig"
-                },
+                "LaunchConfigurationName":"asg_launch_config",
                 "Tags":[  
                     {  
-                        "ResourceType":"auto-scaling-group",
-                        "ResourceId":"my-asg",
                         "PropagateAtLaunch":true,
                         "Key":"Environment",
                         "Value":"Cloud"
@@ -322,6 +318,7 @@
                 ],
                 "MinSize":"3",
                 "MaxSize":"7",
+		"DesiredCapacity" : "3",
                 "Cooldown":"60",
                 "TargetGroupARNs":[  
                     {  
@@ -331,7 +328,8 @@
                         "Ref":"NoWAFALBTargetGroup"
                     }
                 ]
-            }
+            },
+	    "DependsOn" : "LaunchConfig"
         },
         "LaunchConfig":{  
             "Type":"AWS::AutoScaling::LaunchConfiguration",
@@ -421,7 +419,7 @@
         "myRDS":{  
             "Type":"AWS::RDS::DBInstance",
             "Properties":{  
-                "AllocatedStorage":"20",
+                "AllocatedStorage":"60",
                 "DBInstanceClass":"db.m4.large",
                 "MultiAZ":"false",
                 "DBInstanceIdentifier":"csye6225-su19",
@@ -485,8 +483,11 @@
                 },
                 "DeploymentStyle":{  
                     "DeploymentType":"IN_PLACE",
-                    "DeploymentOption":"WITHOUT_TRAFFIC_CONTROL"
+                    "DeploymentOption":"WITH_TRAFFIC_CONTROL"
                 },
+		"LoadBalancerInfo" : {
+	           "TargetGroupInfoList" : [ {"Name" : {"Fn::GetAtt" : ["ALBTargetGroup", "TargetGroupName"]} }]
+	        },
                 "Ec2TagFilters":[  
                     {  
                         "Key":"Environment",
@@ -734,8 +735,9 @@
                     "HttpCode":"200-499"
                 },
                 "HealthCheckIntervalSeconds":30,
-                "HealthCheckTimeoutSeconds":5,
+                "UnhealthyThresholdCount":5,
                 "HealthyThresholdCount":3,
+		"Name":"ALBTargetGroup",
                 "Port":80,
                 "Protocol":"HTTP",
                 "UnhealthyThresholdCount":5,
@@ -743,7 +745,16 @@
                     "Fn::ImportValue":{  
                         "Fn::Sub":"${NetworkStackName}-vpcid"
                     }
-                }
+                },
+		"TargetGroupAttributes": [
+               {
+                   "Key": "stickiness.enabled",
+                   "Value": "true"
+               },
+	       {
+                   "Key": "deregistration_delay.timeout_seconds",
+                   "Value": "20"
+               }]
             }
         },
         "NoWAFALBTargetGroup":{  
@@ -754,8 +765,9 @@
                     "HttpCode":"200-499"
                 },
                 "HealthCheckIntervalSeconds":30,
-                "HealthCheckTimeoutSeconds":5,
+                "UnhealthyThresholdCount":5,
                 "HealthyThresholdCount":3,
+		"Name":"NoWAFALBTargetGroup",
                 "Port":80,
                 "Protocol":"HTTP",
                 "UnhealthyThresholdCount":5,
@@ -763,7 +775,16 @@
                     "Fn::ImportValue":{  
                         "Fn::Sub":"${NetworkStackName}-vpcid"
                     }
-                }
+                },
+		"TargetGroupAttributes": [
+               {
+                   "Key": "stickiness.enabled",
+                   "Value": "true"
+               },
+	       {
+                   "Key": "deregistration_delay.timeout_seconds",
+                   "Value": "20"
+               }]
             }
         },
         "WebServerScaleUpPolicy":{  
@@ -791,7 +812,7 @@
         "CPUAlarmHigh":{  
             "Type":"AWS::CloudWatch::Alarm",
             "Properties":{  
-                "AlarmDescription":"Scale-up if CPU > 90% for 10 minutes",
+                "AlarmDescription":"Scale-up if CPU > 5% for 1 minute",
                 "MetricName":"CPUUtilization",
                 "Namespace":"AWS/EC2",
                 "Statistic":"Average",
@@ -817,7 +838,7 @@
         "CPUAlarmLow":{  
             "Type":"AWS::CloudWatch::Alarm",
             "Properties":{  
-                "AlarmDescription":"Scale-down if CPU < 70% for 10 minutes",
+                "AlarmDescription":"Scale-down if CPU < 3% for 1 minute",
                 "MetricName":"CPUUtilization",
                 "Namespace":"AWS/EC2",
                 "Statistic":"Average",
