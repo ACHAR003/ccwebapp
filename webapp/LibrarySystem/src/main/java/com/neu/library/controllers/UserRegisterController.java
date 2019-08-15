@@ -27,7 +27,7 @@ public class UserRegisterController {
 	@Autowired
 	StatMetric statsMetric;
 
-	private static final Logger logger = LoggerFactory.getLogger(BookController.class);
+	private static final Logger logger = LoggerFactory.getLogger(UserRegisterController.class);
 	
 	@RequestMapping(value="/user/register" ,method=RequestMethod.POST)
 	public ResponseEntity<Object>registerUser(@Valid @RequestBody UserCredential cred){
