@@ -30,9 +30,8 @@ public class ImageController {
 	 StatMetric statsMetric;
 
 	
-	//private static final Logger logger = LoggerFactory.getLogger(BookController.class);
-	 Logger logger = Logger.getLogger("LibrarySystemLog"); 
-	FileHandler fh;  
+	private static final Logger logger = LoggerFactory.getLogger(BookController.class);
+	 
 
 	@RequestMapping(value = "/book/{bookId}/image", method = RequestMethod.POST)
 	public ResponseEntity<Object> imageToBook(@PathVariable @NotNull String bookId,
