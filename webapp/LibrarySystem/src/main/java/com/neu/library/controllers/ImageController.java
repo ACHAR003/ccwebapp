@@ -36,10 +36,8 @@ public class ImageController {
 	@RequestMapping(value = "/book/{bookId}/image", method = RequestMethod.POST)
 	public ResponseEntity<Object> imageToBook(@PathVariable @NotNull String bookId,
 			@RequestParam("file") MultipartFile file) throws SecurityException, IOException {
-		  fh = new FileHandler("/opt/tomcat/logs/csye6225.log");  
-	        logger.addHandler(fh);
-	        SimpleFormatter formatter = new SimpleFormatter();  
-	        fh.setFormatter(formatter);
+		   
+	    
 	        logger.info("Adding image to book");  
 		String message = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		ApiResponse errorResponse;
@@ -51,12 +49,8 @@ public class ImageController {
 }
 
 	@RequestMapping(value = "/book/{bookId}/image/{idImage}", method = RequestMethod.PUT)
-	public ResponseEntity<Object> upadateImageToBook(@PathVariable("bookId") @NotNull String bookId, @PathVariable("idImage") @NotNull String imageId, @RequestParam("file") MultipartFile file) throws SecurityException, IOException {
-		  fh = new FileHandler("/opt/tomcat/logs/csye6225.log");  
-	        logger.addHandler(fh);
-	        SimpleFormatter formatter = new SimpleFormatter();  
-	        fh.setFormatter(formatter);
-	        logger.info("Update image to book");  
+	public ResponseEntity<Object> upadateImageToBook(@PathVariable("bookId") @NotNull String bookId, @PathVariable("idImage") @NotNull String imageId, @RequestParam("file") MultipartFile file) throws SecurityException, IOException 
+	{    logger.info("Update image to book");  
 		String message = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		ApiResponse errorResponse;
 		if (message.equals("Username does not exist") || message.equals("Invalid Credentials")|| message.equals("Username not entered") || message.equals("Password not entered")) {
@@ -67,10 +61,7 @@ public class ImageController {
 	}
 	@RequestMapping(value = "/book/{bookId}/image/{idImage}", method = RequestMethod.GET)
 	public ResponseEntity<Object> getImageToBook(@PathVariable("bookId") @NotNull String bookId, @PathVariable("idImage") @NotNull String imageId, @RequestParam("file") MultipartFile file) throws SecurityException, IOException {
-		  fh = new FileHandler("/opt/tomcat/logs/csye6225.log");  
-	        logger.addHandler(fh);
-	        SimpleFormatter formatter = new SimpleFormatter();  
-	        fh.setFormatter(formatter);
+		 
 	        logger.info("Fetching image");  
 		String message = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		ApiResponse errorResponse;
@@ -83,10 +74,7 @@ public class ImageController {
 	
 	@RequestMapping(value = "/book/{bookId}/image/{imageId}", method = RequestMethod.DELETE	)
 	public ResponseEntity<Object> deleteImage(@PathVariable("bookId") @NotNull String bookId, @PathVariable("imageId") @NotNull String imageId) throws SecurityException, IOException {
-		  fh = new FileHandler("/opt/tomcat/logs/csye6225.log");  
-	        logger.addHandler(fh);
-	        SimpleFormatter formatter = new SimpleFormatter();  
-	        fh.setFormatter(formatter);
+	
 	        logger.info("Delete image to book");  
 		String message = (String) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
 		ApiResponse errorResponse;
